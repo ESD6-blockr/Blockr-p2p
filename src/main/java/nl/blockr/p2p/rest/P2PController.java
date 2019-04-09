@@ -10,12 +10,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
-public class EntrypointController {
+public class P2PController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String getPeer(HttpServletRequest request) {
         return IPSource.getRandomPeer(request.getRemoteAddr());
-
     }
 
     @RequestMapping(value = "/all", method = RequestMethod.GET)
@@ -41,6 +40,4 @@ public class EntrypointController {
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
-
-
 }

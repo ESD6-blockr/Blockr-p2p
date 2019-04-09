@@ -13,7 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class IPSource {
-    private static final List<String> PEERS = new ArrayList<String>();
+
+    private static final List<String> PEERS = new ArrayList<>();
     private static AtomicBoolean succes = new AtomicBoolean(false);
 
     static {
@@ -118,5 +119,4 @@ public class IPSource {
             return false;
         }
     }
-
 }
