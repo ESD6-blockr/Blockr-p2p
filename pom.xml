@@ -12,7 +12,7 @@
     <artifactId>p2p</artifactId>
     <version>0.0.1</version>
     <name>p2p</name>
-    <description>P2P module</description>
+    <description>Blockr P2P module</description>
 
     <properties>
         <java.version>1.8</java.version>
@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
         <dependency>
