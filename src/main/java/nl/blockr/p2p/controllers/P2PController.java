@@ -19,26 +19,31 @@ public class P2PController {
         this.registry = registry;
     }
 
+    @Deprecated
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String getPeer(HttpServletRequest request) {
         return registry.getRandomPeer(request.getRemoteAddr());
     }
 
+    @Deprecated
     @RequestMapping(value = "/all", method = RequestMethod.GET)
     public List<String> getPeers() {
         return registry.getPeers();
     }
 
+    @Deprecated
     @RequestMapping(value = "/size", method = RequestMethod.GET)
     public int getSize() {
         return registry.getPeers().size();
     }
 
+    @Deprecated
     @RequestMapping(value = "/ip", method = RequestMethod.GET)
     public String getIP(HttpServletRequest request) {
         return request.getRemoteAddr();
     }
 
+    @Deprecated
     @RequestMapping(value = "/register", method = RequestMethod.GET)
     public ResponseEntity<Void> addPeer(HttpServletRequest request) {
         System.out.println(request.getRemoteAddr());

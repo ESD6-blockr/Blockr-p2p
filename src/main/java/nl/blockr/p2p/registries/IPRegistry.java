@@ -17,11 +17,18 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Service
 public class IPRegistry {
 
-    private final List<String> peers = new ArrayList<>();
-    private static AtomicBoolean success = new AtomicBoolean(false);
+    private List<String> peers;
+    private AtomicBoolean success;
 
-    static {
-        //peers.add("145.93.104.233");
+    private List<String> p2pIps;
+    private List<String> validatorIps;
+
+    public IPRegistry() {
+        peers = new ArrayList<>();
+        success = new AtomicBoolean(false);
+
+        p2pIps = new ArrayList<>();
+        validatorIps = new ArrayList<>();
     }
 
     public List<String> getPeers() {
@@ -35,6 +42,7 @@ public class IPRegistry {
         } catch (ConditionTimeoutException ex) {
             return false;
         }
+
         if ((peer != null) && validIP(peer)) {
             if (!peers.contains(peer)) {
                 peers.add(peer);
@@ -43,15 +51,16 @@ public class IPRegistry {
             return true;
         }
         return false;
-
     }
 
     public String getRandomPeer(String requestIP) {
         if (peers.size() > 0) {
             String peer = peers.get(ThreadLocalRandom.current().nextInt(peers.size()));
             isReachable(peer, 8080);
+
             try {
                 Awaitility.await().atMost(2, SECONDS).untilTrue(success);
+
                 if (peer.equals(requestIP)) {
                     if (peers.size() == 1) {
                         return "first";
@@ -59,7 +68,6 @@ public class IPRegistry {
                     return getRandomPeer(requestIP);
                 }
                 return peer;
-
             } catch (ConditionTimeoutException ex) {
                 peers.remove(peer);
                 return getRandomPeer(requestIP);
@@ -69,7 +77,7 @@ public class IPRegistry {
         return "empty";
     }
 
-    private static void isReachable(String address, int port) {
+    private void isReachable(String address, int port) {
         success.set(false);
         try {
             io.socket.client.Socket socket = IO.socket("http://" + address + ":" + port);
@@ -93,7 +101,7 @@ public class IPRegistry {
     }
 
     // Simple regex IP4 check
-    private static boolean validIP(String ip) {
+    private boolean validIP(String ip) {
         try {
             if (ip == null || ip.isEmpty()) {
                 return false;
@@ -110,11 +118,8 @@ public class IPRegistry {
                     return false;
                 }
             }
-            if (ip.endsWith(".")) {
-                return false;
-            }
 
-            return true;
+            return !ip.endsWith(".");
         } catch (NumberFormatException nfe) {
             return false;
         }
