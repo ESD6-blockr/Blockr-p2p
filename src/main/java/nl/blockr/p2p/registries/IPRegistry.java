@@ -2,13 +2,18 @@ package nl.blockr.p2p.registries;
 
 import io.socket.client.IO;
 import io.socket.emitter.Emitter;
+import nl.blockr.p2p.exceptions.InvalidIPException;
+import nl.blockr.p2p.exceptions.NoValidatorsFoundException;
+import nl.blockr.p2p.utils.IPValidator;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,13 +22,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Service
 public class IPRegistry {
 
+    private final IPValidator validator;
+
     private List<String> peers;
     private AtomicBoolean success;
 
     private List<String> p2pIps;
     private List<String> validatorIps;
 
-    public IPRegistry() {
+    @Autowired
+    public IPRegistry(IPValidator validator) {
+        this.validator = validator;
         peers = new ArrayList<>();
         success = new AtomicBoolean(false);
 
@@ -36,14 +45,14 @@ public class IPRegistry {
     }
 
     public boolean addPeer(String peer) {
-        isReachable(peer, 8080);
+        isReachable(peer);
         try {
             Awaitility.await().atMost(2, SECONDS).untilTrue(success);
         } catch (ConditionTimeoutException ex) {
             return false;
         }
 
-        if ((peer != null) && validIP(peer)) {
+        if ((peer != null) && validator.isValidIp(peer)) {
             if (!peers.contains(peer)) {
                 peers.add(peer);
             }
@@ -56,7 +65,7 @@ public class IPRegistry {
     public String getRandomPeer(String requestIP) {
         if (peers.size() > 0) {
             String peer = peers.get(ThreadLocalRandom.current().nextInt(peers.size()));
-            isReachable(peer, 8080);
+            isReachable(peer);
 
             try {
                 Awaitility.await().atMost(2, SECONDS).untilTrue(success);
@@ -77,10 +86,10 @@ public class IPRegistry {
         return "empty";
     }
 
-    private void isReachable(String address, int port) {
+    private boolean isReachable(String address) {
         success.set(false);
         try {
-            io.socket.client.Socket socket = IO.socket("http://" + address + ":" + port);
+            io.socket.client.Socket socket = IO.socket("http://" + address + ":8080");
             socket.on(io.socket.client.Socket.EVENT_CONNECT, new Emitter.Listener() {
                 @Override
                 public void call(Object... objects) {
@@ -95,33 +104,43 @@ public class IPRegistry {
             });
             socket.connect();
 
+            return true;
+
         } catch (URISyntaxException e) {
             e.printStackTrace();
+            return false;
         }
     }
 
-    // Simple regex IP4 check
-    private boolean validIP(String ip) {
-        try {
-            if (ip == null || ip.isEmpty()) {
-                return false;
-            }
-
-            String[] parts = ip.split("\\.");
-            if (parts.length != 4) {
-                return false;
-            }
-
-            for (String s : parts) {
-                int i = Integer.parseInt(s);
-                if ((i < 0) || (i > 255)) {
-                    return false;
-                }
-            }
-
-            return !ip.endsWith(".");
-        } catch (NumberFormatException nfe) {
-            return false;
+    public String getValidator() throws NoValidatorsFoundException {
+        if (validatorIps.isEmpty()) {
+            throw new NoValidatorsFoundException("No validators available");
         }
+
+        String randomValidator = validatorIps.get(new Random().nextInt(validatorIps.size()));
+
+        if (isReachable(randomValidator)) {
+            return randomValidator;
+        }
+        return getValidator();
+    }
+
+    public void addValidator(String ip) throws InvalidIPException {
+        if (!validator.isValidIp(ip)) {
+            throw new InvalidIPException("Invalid IP address");
+        }
+
+        if (isReachable(ip) && !validatorIps.contains(ip)) {
+            validatorIps.add(ip);
+        }
+    }
+
+    public String getP2P() {
+        //TODO
+        return null;
+    }
+
+    public void addP2P(String ip) {
+        //TODO
     }
 }
