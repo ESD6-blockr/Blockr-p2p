@@ -4,39 +4,40 @@ import io.socket.client.IO;
 import io.socket.emitter.Emitter;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+import org.springframework.stereotype.Service;
 
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@Service
 public class IPRegistry {
 
-    private static final List<String> PEERS = new ArrayList<>();
-    private static AtomicBoolean succes = new AtomicBoolean(false);
+    private final List<String> peers = new ArrayList<>();
+    private static AtomicBoolean success = new AtomicBoolean(false);
 
     static {
-        //PEERS.add("145.93.104.233");
+        //peers.add("145.93.104.233");
     }
 
-    public static List<String> getPeers() {
-        return PEERS;
+    public List<String> getPeers() {
+        return peers;
     }
 
-    public static boolean addPeer(String peer) {
+    public boolean addPeer(String peer) {
         isReachable(peer, 8080);
         try {
-            Awaitility.await().atMost(2, SECONDS).untilTrue(succes);
-        }
-        catch(ConditionTimeoutException ex)
-        {
+            Awaitility.await().atMost(2, SECONDS).untilTrue(success);
+        } catch (ConditionTimeoutException ex) {
             return false;
         }
         if ((peer != null) && validIP(peer)) {
-            if (!PEERS.contains(peer)) {
-                PEERS.add(peer);
+            if (!peers.contains(peer)) {
+                peers.add(peer);
             }
 
             return true;
@@ -45,15 +46,14 @@ public class IPRegistry {
 
     }
 
-
-    public static String getRandomPeer(String requestIP) {
-        if (PEERS.size() > 0) {
-            String peer = PEERS.get(ThreadLocalRandom.current().nextInt(IPRegistry.getPeers().size()));
+    public String getRandomPeer(String requestIP) {
+        if (peers.size() > 0) {
+            String peer = peers.get(ThreadLocalRandom.current().nextInt(peers.size()));
             isReachable(peer, 8080);
             try {
-                Awaitility.await().atMost(2, SECONDS).untilTrue(succes);
+                Awaitility.await().atMost(2, SECONDS).untilTrue(success);
                 if (peer.equals(requestIP)) {
-                    if (PEERS.size() == 1) {
+                    if (peers.size() == 1) {
                         return "first";
                     }
                     return getRandomPeer(requestIP);
@@ -61,7 +61,7 @@ public class IPRegistry {
                 return peer;
 
             } catch (ConditionTimeoutException ex) {
-                PEERS.remove(peer);
+                peers.remove(peer);
                 return getRandomPeer(requestIP);
             }
         }
@@ -70,7 +70,7 @@ public class IPRegistry {
     }
 
     private static void isReachable(String address, int port) {
-        succes.set(false);
+        success.set(false);
         try {
             io.socket.client.Socket socket = IO.socket("http://" + address + ":" + port);
             socket.on(io.socket.client.Socket.EVENT_CONNECT, new Emitter.Listener() {
@@ -81,7 +81,7 @@ public class IPRegistry {
             }).on("message_isAlive", new Emitter.Listener() {
                 @Override
                 public void call(Object... objects) {
-                    succes.set(true);
+                    success.set(true);
                     socket.disconnect();
                 }
             });

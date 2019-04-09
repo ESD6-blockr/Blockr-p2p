@@ -13,19 +13,25 @@ import java.util.List;
 @RestController
 public class P2PController {
 
+    private final IPRegistry registry;
+
+    public P2PController(IPRegistry registry) {
+        this.registry = registry;
+    }
+
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String getPeer(HttpServletRequest request) {
-        return IPRegistry.getRandomPeer(request.getRemoteAddr());
+        return registry.getRandomPeer(request.getRemoteAddr());
     }
 
     @RequestMapping(value = "/all", method = RequestMethod.GET)
     public List<String> getPeers() {
-        return IPRegistry.getPeers();
+        return registry.getPeers();
     }
 
     @RequestMapping(value = "/size", method = RequestMethod.GET)
     public int getSize() {
-        return IPRegistry.getPeers().size();
+        return registry.getPeers().size();
     }
 
     @RequestMapping(value = "/ip", method = RequestMethod.GET)
@@ -36,7 +42,7 @@ public class P2PController {
     @RequestMapping(value = "/register", method = RequestMethod.GET)
     public ResponseEntity<Void> addPeer(HttpServletRequest request) {
         System.out.println(request.getRemoteAddr());
-        if (IPRegistry.addPeer(request.getRemoteAddr())) {
+        if (registry.addPeer(request.getRemoteAddr())) {
             return ResponseEntity.status(HttpStatus.CREATED).build();
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
