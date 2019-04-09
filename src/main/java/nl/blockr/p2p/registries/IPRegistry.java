@@ -1,4 +1,4 @@
-package nl.blockr.p2p.rest;
+package nl.blockr.p2p.registries;
 
 import io.socket.client.IO;
 import io.socket.emitter.Emitter;
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class IPSource {
+public class IPRegistry {
 
     private static final List<String> PEERS = new ArrayList<>();
     private static AtomicBoolean succes = new AtomicBoolean(false);
@@ -48,7 +48,7 @@ public class IPSource {
 
     public static String getRandomPeer(String requestIP) {
         if (PEERS.size() > 0) {
-            String peer = PEERS.get(ThreadLocalRandom.current().nextInt(IPSource.getPeers().size()));
+            String peer = PEERS.get(ThreadLocalRandom.current().nextInt(IPRegistry.getPeers().size()));
             isReachable(peer, 8080);
             try {
                 Awaitility.await().atMost(2, SECONDS).untilTrue(succes);

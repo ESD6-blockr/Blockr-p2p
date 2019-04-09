@@ -1,5 +1,6 @@
-package nl.blockr.p2p.rest;
+package nl.blockr.p2p.controllers;
 
+import nl.blockr.p2p.registries.IPRegistry;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,17 +15,17 @@ public class P2PController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String getPeer(HttpServletRequest request) {
-        return IPSource.getRandomPeer(request.getRemoteAddr());
+        return IPRegistry.getRandomPeer(request.getRemoteAddr());
     }
 
     @RequestMapping(value = "/all", method = RequestMethod.GET)
     public List<String> getPeers() {
-        return IPSource.getPeers();
+        return IPRegistry.getPeers();
     }
 
     @RequestMapping(value = "/size", method = RequestMethod.GET)
     public int getSize() {
-        return IPSource.getPeers().size();
+        return IPRegistry.getPeers().size();
     }
 
     @RequestMapping(value = "/ip", method = RequestMethod.GET)
@@ -35,7 +36,7 @@ public class P2PController {
     @RequestMapping(value = "/register", method = RequestMethod.GET)
     public ResponseEntity<Void> addPeer(HttpServletRequest request) {
         System.out.println(request.getRemoteAddr());
-        if (IPSource.addPeer(request.getRemoteAddr())) {
+        if (IPRegistry.addPeer(request.getRemoteAddr())) {
             return ResponseEntity.status(HttpStatus.CREATED).build();
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
