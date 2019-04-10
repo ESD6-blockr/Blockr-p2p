@@ -1,6 +1,7 @@
 package nl.blockr.p2p.controllers;
 
 import nl.blockr.p2p.exceptions.InvalidIPException;
+import nl.blockr.p2p.exceptions.NoPeersFoundException;
 import nl.blockr.p2p.exceptions.NoValidatorsFoundException;
 import nl.blockr.p2p.registries.IPRegistry;
 import nl.blockr.p2p.utils.JSONSerializer;
@@ -45,13 +46,23 @@ public class P2PController {
 
     @GetMapping(value = "/peers")
     public ResponseEntity<String> getP2P() {
-        return new ResponseEntity<>(serializer.toJSON(registry.getPeers()), HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(serializer.toJSON(registry.getPeers()), HttpStatus.OK);
+        } catch (NoPeersFoundException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping(value = "/peers")
     public ResponseEntity addP2P(@RequestBody String ip) {
-        registry.addPeer(ip);
-        return new ResponseEntity<>(HttpStatus.OK);
+        try {
+            registry.addPeer(ip);
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        } catch (InvalidIPException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping(value = "/status")

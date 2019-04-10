@@ -1,6 +1,7 @@
 package nl.blockr.p2p.registries;
 
 import nl.blockr.p2p.exceptions.InvalidIPException;
+import nl.blockr.p2p.exceptions.NoPeersFoundException;
 import nl.blockr.p2p.exceptions.NoValidatorsFoundException;
 import nl.blockr.p2p.models.IPAddress;
 import nl.blockr.p2p.utils.IPValidator;
@@ -32,15 +33,27 @@ public class IPRegistry {
         startJobs();
     }
 
-    public List<IPAddress> getPeers() {
+    public List<IPAddress> getPeers() throws NoPeersFoundException {
+        if (peerIps.isEmpty()) {
+            throw new NoPeersFoundException("No peers available");
+        }
+
         return this.peerIps;
     }
 
-    public void addPeer(String ip) {
+    public void addPeer(String ip) throws InvalidIPException {
+        if (!validator.isValidIp(ip)) {
+            throw new InvalidIPException("Invalid IP address");
+        }
+
         //TODO
     }
 
-    public List<IPAddress> getValidators() {
+    public List<IPAddress> getValidators() throws NoValidatorsFoundException {
+        if (validatorIps.isEmpty()) {
+            throw new NoValidatorsFoundException("No validators available");
+        }
+
         return this.validatorIps;
     }
 
