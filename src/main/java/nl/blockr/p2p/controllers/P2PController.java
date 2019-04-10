@@ -22,7 +22,7 @@ public class P2PController {
         this.serializer = serializer;
     }
 
-    @GetMapping(value = "/validator")
+    @GetMapping(value = "/validators")
     public ResponseEntity<String> getValidator() {
         try {
             return new ResponseEntity<>(serializer.toJSON(registry.getValidator()), HttpStatus.OK);
@@ -32,7 +32,7 @@ public class P2PController {
         }
     }
 
-    @PostMapping(value = "/validator")
+    @PostMapping(value = "/validators")
     public ResponseEntity addValidator(@RequestBody String ip) {
         try {
             registry.addValidator(ip);

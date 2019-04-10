@@ -10,21 +10,38 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class IPRegistry {
 
     private final IPValidator validator;
 
-    private List<IPAddress> p2pIps;
+    private List<IPAddress> peerIps;
     private List<IPAddress> validatorIps;
 
     @Autowired
     public IPRegistry(IPValidator validator) {
         this.validator = validator;
 
-        p2pIps = new ArrayList<>();
+        peerIps = new ArrayList<>();
         validatorIps = new ArrayList<>();
+
+        startJobs();
+    }
+
+    public List<IPAddress> getPeers() {
+        return this.peerIps;
+    }
+
+    public void addPeer(String ip) {
+        //TODO
+    }
+
+    public List<IPAddress> getValidators() {
+        return this.validatorIps;
     }
 
     public IPAddress getValidator() throws NoValidatorsFoundException {
@@ -52,12 +69,10 @@ public class IPRegistry {
         validatorIps.set(ipIndex, ipAddress);
     }
 
-    public List<IPAddress> getPeers() {
-        return this.p2pIps;
-    }
-
-    public void addPeer(String ip) {
-        //TODO
+    private void startJobs() {
+        final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+        scheduler.scheduleAtFixedRate(this::clearOldValidatorIps, 5, 5, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(this::clearOldPeerIps, 5, 5, TimeUnit.MINUTES);
     }
 
     private void clearOldValidatorIps() {
@@ -67,6 +82,17 @@ public class IPRegistry {
         for (IPAddress ipAddress : validatorIps) {
             if (ipAddress.getDate() < fiveAgo) {
                 validatorIps.remove(ipAddress);
+            }
+        }
+    }
+
+    private void clearOldPeerIps() {
+        // 5 minutes ago
+        long fiveAgo = System.currentTimeMillis() - 5 * 60 * 1000;
+
+        for (IPAddress ipAddress : peerIps) {
+            if (ipAddress.getDate() < fiveAgo) {
+                peerIps.remove(ipAddress);
             }
         }
     }
