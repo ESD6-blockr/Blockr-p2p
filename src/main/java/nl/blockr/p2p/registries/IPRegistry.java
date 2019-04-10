@@ -4,6 +4,7 @@ import io.socket.client.IO;
 import io.socket.emitter.Emitter;
 import nl.blockr.p2p.exceptions.InvalidIPException;
 import nl.blockr.p2p.exceptions.NoValidatorsFoundException;
+import nl.blockr.p2p.models.IPAddress;
 import nl.blockr.p2p.utils.IPValidator;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
@@ -28,11 +29,12 @@ public class IPRegistry {
     private AtomicBoolean success;
 
     private List<String> p2pIps;
-    private List<String> validatorIps;
+    private List<IPAddress> validatorIps;
 
     @Autowired
     public IPRegistry(IPValidator validator) {
         this.validator = validator;
+
         peers = new ArrayList<>();
         success = new AtomicBoolean(false);
 
@@ -112,17 +114,12 @@ public class IPRegistry {
         }
     }
 
-    public String getValidator() throws NoValidatorsFoundException {
+    public IPAddress getValidator() throws NoValidatorsFoundException {
         if (validatorIps.isEmpty()) {
             throw new NoValidatorsFoundException("No validators available");
         }
 
-        String randomValidator = validatorIps.get(new Random().nextInt(validatorIps.size()));
-
-        if (isReachable(randomValidator)) {
-            return randomValidator;
-        }
-        return getValidator();
+        return validatorIps.get(new Random().nextInt(validatorIps.size()));
     }
 
     public void addValidator(String ip) throws InvalidIPException {
@@ -130,9 +127,16 @@ public class IPRegistry {
             throw new InvalidIPException("Invalid IP address");
         }
 
-        if (isReachable(ip) && !validatorIps.contains(ip)) {
-            validatorIps.add(ip);
+        IPAddress ipAddress = new IPAddress(ip);
+        int ipIndex = validatorIps.indexOf(ipAddress);
+
+        if (ipIndex == -1) {
+            validatorIps.add(ipAddress);
+            return;
         }
+
+        // Else, update ip address
+        validatorIps.set(ipIndex, ipAddress);
     }
 
     public String getP2P() {
@@ -142,5 +146,16 @@ public class IPRegistry {
 
     public void addP2P(String ip) {
         //TODO
+    }
+
+    private void clearOldValidatorIps() {
+        // 5 minutes ago
+        long fiveAgo = System.currentTimeMillis() - 5 * 60 * 1000;
+
+        for (IPAddress ipAddress : validatorIps) {
+            if (ipAddress.getDate() < fiveAgo) {
+                validatorIps.remove(ipAddress);
+            }
+        }
     }
 }
