@@ -11,9 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-
 @RestController
 public class P2PController {
 
@@ -46,14 +43,14 @@ public class P2PController {
         }
     }
 
-    @GetMapping(value = "/p2p")
+    @GetMapping(value = "/peers")
     public ResponseEntity<String> getP2P() {
-        return new ResponseEntity<>(registry.getP2P(), HttpStatus.OK);
+        return new ResponseEntity<>(serializer.toJSON(registry.getPeers()), HttpStatus.OK);
     }
 
-    @PostMapping(value = "/p2p")
+    @PostMapping(value = "/peers")
     public ResponseEntity addP2P(@RequestBody String ip) {
-        registry.addP2P(ip);
+        registry.addPeer(ip);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
